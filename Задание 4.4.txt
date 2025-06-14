@@ -1,0 +1,60 @@
+#!/bin/bash
+
+GFF="input.gff"
+
+# Файл для хранения отфильтрованных генов
+GENES_FILE="genes_table.tsv"
+
+# Очистка предыдущего вывода
+> "$GENES_FILE"
+
+# Заголовок таблицы
+echo -e "Gene_Name\tChromosome\tCoordinates\tStrand\tTranscripts" >> "$GENES_FILE"
+
+# Извлекаем гены по условиям
+grep -P '\tgene\t' "$GFF" | while IFS=$'\t' read -r chrom source type start end score strand phase attr; do
+    # Извлечение имени гена
+    gene=$(echo "$attr" | grep -o 'Name=[^;]*' | cut -d= -f2)
+
+    # Извлечение транскриптов (если есть)
+    transcripts=$(echo "$attr" | grep -o 'transcript_id=[^;]*' | cut -d= -f2 | paste -sd "," -)
+
+    # Проверка условий и вывод в таблицу
+    if [[ "$strand" == "-" && "${#gene}" -gt 3 && ! "$gene" =~ ^[AZH] ]]; then
+        echo -e "$gene\t$chrom\t$start-$end\t$strand\t${transcripts:-NA}" >> "$GENES_FILE"
+    elif [[ "$strand" == "+" && "$gene" =~ ^[AZH] ]]; then
+        echo -e "$gene\t$chrom\t$start-$end\t$strand\t${transcripts:-NA}" >> "$GENES_FILE"
+    fi
+done
+
+# Вывод таблицы
+echo -e "\n Таблица подходящих генов:"
+column -t -s $'\t' "$GENES_FILE"
+
+# ─────────────────────────────────────
+# 📊 Сводная таблица
+echo -e "\n Сводная информация:"
+
+# Кол-во генов на каждой хромосоме
+echo -e "\n Количество генов на каждой хромосоме:"
+cut -f2 "$GENES_FILE" | tail -n +2 | sort | uniq -c | awk '{print $2 "\t" $1}' | column -t
+
+# Средняя длина генов по хромосомам
+echo -e "\n Средняя длина гена на хромосоме:"
+tail -n +2 "$GENES_FILE" | awk -F '\t' '
+{
+    chr = $2
+    split($3, coords, "-")
+    len = coords[2] - coords[1] + 1
+    sum[chr] += len
+    count[chr]++
+}
+END {
+    for (chr in sum) {
+        printf "%s\t%.2f\n", chr, sum[chr]/count[chr]
+    }
+}' | sort
+
+# Общее количество генов на + и - цепи
+echo -e "\n Количество генов на + и - цепи:"
+cut -f4 "$GENES_FILE" | tail -n +2 | sort | uniq -c | awk '{print $2 "\t" $1}' | column -t
