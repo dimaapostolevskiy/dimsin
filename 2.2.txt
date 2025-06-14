@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Проверка количества аргументов
+if [ "$#" -ne 3 ]; then
+    echo "Ошибка: требуется 3 аргумента (путь к файлу, текущее расширение, новое расширение)."
+    exit 1
+fi
+
+# Аргументы
+FILE_PATH="$1"
+CURRENT_EXT="$2"
+NEW_EXT="$3"
+
+# Список поддерживаемых расширений
+SUPPORTED_EXTENSIONS=("txt" "pdf" "doc")
+
+# Проверка поддерживаемых форматов
+if [[ ! " ${SUPPORTED_EXTENSIONS[*]} " =~ " ${CURRENT_EXT} " ]] || [[ ! " ${SUPPORTED_EXTENSIONS[*]} " =~ " ${NEW_EXT} " ]]; then
+    echo "Ошибка: поддерживаются только файлы с расширениями: txt, pdf, doc."
+    exit 1
+fi
+
+# Проверка существования файла
+if [ ! -f "${FILE_PATH}" ]; then
+    echo "Ошибка: файл не найден!"
+    exit 1
+fi
+
+# Замена расширения
+NEW_FILE_PATH="${FILE_PATH%.$CURRENT_EXT}.$NEW_EXT"
+mv "$FILE_PATH" "$NEW_FILE_PATH"
+
+echo "Файл успешно переименован: $NEW_FILE_PATH"
