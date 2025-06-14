@@ -1,0 +1,23 @@
+bash
+
+#!/bin/bash
+
+# Создание структуры дома
+mkdir -p house/{floor1,floor2}
+
+# Этаж 1 с двумя комнатами
+mkdir -p house/floor1/{kitchen,living_room}
+# В кухне есть холодильник (папка) и в нем список продуктов (файл)
+mkdir -p house/floor1/kitchen/fridge
+echo -e "Молоко\nЯйца\nСыр\nОвощи" > house/floor1/kitchen/fridge/products.txt
+
+# Гостиная с диваном (файл)
+echo "Мягкий диван" > house/floor1/living_room/sofa.txt
+
+# Этаж 2 с двумя спальнями
+mkdir -p house/floor2/{bedroom1,bedroom2}
+# В спальнях есть кровати (файлы)
+echo "Двуспальная кровать" > house/floor2/bedroom1/bed.txt
+echo "Односпальная кровать" > house/floor2/bedroom2/bed.txt
+
+echo "Дом построен!"
